@@ -48,6 +48,7 @@ export default function Home() {
   const router = useRouter()
   const { toast } = useToast()
   const searchQuery = searchParams.get('search')
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // Use the base URL from .env
 
   useEffect(() => {
     if (searchQuery) {
@@ -59,8 +60,9 @@ export default function Home() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('/doc-list')
+      const response = await fetch(`${API_BASE_URL}/doc-list`)
       const data = await response.json()
+      console.log(data);
       setDocuments(data)
     } catch (error) {
       toast({
@@ -76,7 +78,7 @@ export default function Home() {
   const fetchSearchResults = async (keyword: string) => {
     setLoading(true)
     try {
-      const response = await fetch(`/search-keyword?keyword=${encodeURIComponent(keyword)}`)
+      const response = await fetch(`${API_BASE_URL}/search-keyword?keyword=${encodeURIComponent(keyword)}`)
       const data = await response.json()
       setSearchResults(data)
     } catch (error) {
@@ -92,7 +94,7 @@ export default function Home() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/doc-delete?id=${id}`, {
+      const response = await fetch(`${API_BASE_URL}/doc-delete?id=${id}`, {
         method: 'DELETE',
       })
       const data = await response.json()
@@ -202,8 +204,8 @@ export default function Home() {
           <Card key={doc.id} className="flex flex-col">
             <div className="relative pt-[56.25%]">
               <img
-                src={`/thumbnails/${doc.id}.jpg`}
-                alt={doc.title}
+                src={`${API_BASE_URL}/storage/thumbnails/${doc.title.split('.')[0]}/1.jpg`}
+                alt={doc.title.split('.')[0]}
                 className="absolute top-0 left-0 w-full h-full object-cover rounded-t-lg"
               />
             </div>
