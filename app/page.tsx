@@ -12,7 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, BookOpen, PenTool, Languages, Trash2, FileSearch } from "lucide-react"
+import { Search, BookOpen, PenTool, Languages, Trash2, FileSearch, ChevronDown } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,22 +28,23 @@ import { useRouter } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
 
 type Document = {
-  id: string;
-  title: string;
-  type: number;
+  document_id: string;
+  document_title: string;
+  pages: { page_number: number, lines: string[] }[]
 }
 
 type SearchResult = {
   id: string;
-  thumbnail_src: string;
-  line_text: string[];
-  page: number[];
+  document_title: string;
+  pages: { page_number: number, lines: string[] }[]
 }
 
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedCard, setExpandedCard] = useState<string | null>(null)
+  const [expandedPages, setExpandedPages] = useState<{ [key: number]: boolean }>({})
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
@@ -57,6 +58,15 @@ export default function Home() {
       fetchDocuments()
     }
   }, [searchQuery])
+
+  const toggleCard = (id: string) => {
+    setExpandedCard(expandedCard === id ? null : id)
+  }
+
+  const togglePage = (pageNumber: number) => {
+    setExpandedPages((prev) => ({ ...prev, [pageNumber]: !prev[pageNumber] }))
+  }
+
 
   const fetchDocuments = async () => {
     try {
@@ -81,6 +91,7 @@ export default function Home() {
       const response = await fetch(`${API_BASE_URL}/search-keyword?keyword=${encodeURIComponent(keyword)}`)
       const data = await response.json()
       setSearchResults(data)
+      
     } catch (error) {
       toast({
         title: "エラー",
@@ -134,66 +145,55 @@ export default function Home() {
   if (searchQuery) {
     return (
       <div className="container mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6">「{searchQuery}」の検索結果</h2>
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-          {searchResults.map((result) => (
-            <Card key={result.id} className="overflow-hidden">
-              <div className="flex">
-                <div className="w-1/3">
-                  <img
-                    src={result.thumbnail_src}
-                    alt="サムネイル"
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
-                <div className="w-2/3 p-4">
-                  <h3 className="text-lg font-semibold mb-2">{result.title}</h3>
-                  <div className="space-y-2">
-                    {result.line_text.map((line, index) => (
-                      <p key={index} className="text-sm text-muted-foreground">
-                        {line} (ページ: {result.page[index]})
-                      </p>
-                    ))}
-                  </div>
-                </div>
+      <h2 className="text-2xl font-bold mb-6">「{searchQuery}」の検索結果</h2>
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        {searchResults.map((result) => (
+          <Card key={result.id} className="overflow-hidden">
+            <div className="flex cursor-pointer" onClick={() => toggleCard(result.id)}>
+              <div className="w-1/3 py-3 bg-gray-200 flex justify-center">
+                <img
+                  src={`${API_BASE_URL}/storage/thumbnails/${result.document_title.split('.')[0]}/1.jpg`}
+                  alt="サムネイル"
+                  className="w-20 h-auto object-cover"
+                />
               </div>
-              <CardFooter className="flex justify-end space-x-2 p-4 bg-muted/50">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/document/${result.id}`)}
-                >
-                  <FileSearch className="mr-2 h-4 w-4" />
-                  詳細
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      削除
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>文献を削除しますか？</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        この操作は取り消すことができません。
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(result.id)}
-                      >
-                        削除
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+              <div className="w-2/3 p-4 flex flex-col">
+                <h3 className="text-lg font-semibold mb-2 flex items-center justify-between">
+                  {result.document_title}
+                  <ChevronDown className={`transform ${expandedCard === result.id ? 'rotate-180' : ''}`} />
+                </h3>
+                <span>検索結果 {result.pages.reduce((total, page) => total + page.lines.length, 0)} 件</span>
+              </div>
+            </div>
+            {expandedCard === result.id && (
+              <ScrollArea className="h-[400px] overflow-y-auto p-4 border-2 border-gray-300 rounded-lg">
+                {result.pages.map((page) => (
+                  <div key={page.page_number} className="mt-2 border-b border-gray-200 pb-2">
+                    <p className="font-bold cursor-pointer flex items-center" onClick={() => togglePage(page.page_number)}>
+                      [ページ {page.page_number}]
+                      <ChevronDown className={`ml-2 transform ${expandedPages[page.page_number] ? 'rotate-180' : ''}`} />
+                    </p>
+                    {expandedPages[page.page_number] && (
+                      <ul className="ml-4 list-disc">
+                        {page.lines.map((line, index) => (
+                          <li key={index} className="text-sm text-muted-foreground">{line}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </ScrollArea>
+            )}
+            <CardFooter className="flex justify-end space-x-2 p-4 bg-muted/50">
+              <Button variant="outline" onClick={() => router.push(`/document/${result.id}`)}>
+                <FileSearch className="mr-2 h-4 w-4" />
+                詳細
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
+    </div>
     )
   }
 
