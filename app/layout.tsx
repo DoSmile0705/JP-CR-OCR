@@ -28,7 +28,7 @@ export default function RootLayout({
         >
           <div className="min-h-screen bg-background">
             <Navbar />
-            <main>{children}</main>
+            <main className='flex-grow overflow-hidden'>{children}</main>
           </div>
           <Toaster />
         </ThemeProvider>
