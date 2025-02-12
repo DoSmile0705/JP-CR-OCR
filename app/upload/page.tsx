@@ -66,21 +66,30 @@ export default function UploadPage() {
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">ファイルアップロード</h2>
       <div className="flex gap-4 flex-col">
-        <Label>ファイル</Label>
+        <Label>ファイル:</Label>
         <Input
           type="file"
           onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
           className="mb-4"
         />
-        <Label>ファイルタイプ</Label>
-        <Input
-          type="number"
-          placeholder="ファイルタイプ (1, 2, 3)"
-          value={fileType}
-          onChange={(e) => setFileType(e.target.value ? Number(e.target.value) : "")}
-          className="mb-4 pl-2"
-          width={3}
-        />
+        <div className="flex flex-row items-center">
+
+          <Label>ファイルタイプ:</Label>
+          <div className="flex items-center">
+
+            <Input
+              type="number"
+              placeholder="1/2/3"
+              value={fileType}
+              onChange={(e) => setFileType(e.target.value ? Number(e.target.value) : "")}
+              className="ml-10 w-20"
+              min="1"
+              max="4"
+            />
+          </div>
+
+        </div>
+
         <div className="flex justify-center">
           <Button onClick={handleUpload} disabled={isLoading} className="w-20">
             {isLoading ? "アップロード中..." : "保存"}

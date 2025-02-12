@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
 
 type Document = {
     id: string;
@@ -61,6 +62,13 @@ const DocumentDetail = () => {
             }),
         });
         const data = await response.json();
+        if (data.status) {
+            toast({
+                title: "成功",
+                description: "文献を削除しました",
+            })
+            router.push('/');
+        }
         console.log(data);
     }
 
@@ -117,7 +125,7 @@ const DocumentDetail = () => {
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1}
                             >
-                                Previous
+                                前へ
                             </Button>
                             <Input
                                 className="w-20 text-center"
@@ -137,7 +145,7 @@ const DocumentDetail = () => {
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage >= document.text.length}
                             >
-                                Next
+                                次へ
                             </Button>
                         </div>
 
