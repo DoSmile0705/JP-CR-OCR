@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import * as Dialog from "@radix-ui/react-dialog";
+import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,7 +15,14 @@ export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { token } = useAuth();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  useEffect(() => {
+    if (!token) {
+      router.push('/auth/signin');
+    }
+  }, [token, router]);
 
   const handleUpload = async () => {
     if (!file || fileType === "") {
@@ -34,6 +42,9 @@ export default function UploadPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/upload`, {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
       const result = await response.json();
@@ -45,16 +56,12 @@ export default function UploadPage() {
         });
         router.push("/"); // Redirect to home after upload
       } else {
-        toast({
-          title: "エラー",
-          description: result.message,
-          variant: "destructive",
-        });
+        throw new Error(result.message);
       }
     } catch (error) {
       toast({
         title: "エラー",
-        description: "ファイルのアップロードに失敗しました",
+        description: error instanceof Error ? error.message : "ファイルのアップロードに失敗しました",
         variant: "destructive",
       });
     } finally {

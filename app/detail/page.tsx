@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { fetchWithAuth } from '@/app/utils/api';
 
 type Document = {
     id: string;
@@ -20,12 +22,14 @@ const DocumentDetail = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isEditing, setIsEditing] = useState(false);
     const documentId = searchParams.get('id');
+    const { token } = useAuth();
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     useEffect(() => {
         if (documentId) {
             fetchDocumentDetail(documentId);
         }
-    }, [documentId]);
+    }, [documentId, token, router]);
 
     const fetchDocumentDetail = async (id: string) => {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/doc-detail?id=${id}`);
@@ -55,6 +59,7 @@ const DocumentDetail = () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
                 text: document?.text,
@@ -65,7 +70,7 @@ const DocumentDetail = () => {
         if (data.status) {
             toast({
                 title: "成功",
-                description: "文献を削除しました",
+                description: data.message,
             })
             router.push('/');
         }
@@ -73,7 +78,14 @@ const DocumentDetail = () => {
     }
 
     if (!document) {
-        return <div>ローディング中...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                    <p className="text-muted-foreground">ローディング中...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -82,15 +94,14 @@ const DocumentDetail = () => {
                 {/* Left Section: PDF Viewer */}
                 <div className="w-1/2 flex flex-col">
                     <object
-                        data={`${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/documents/${document.title}`}
+                        data={`${API_BASE_URL}/storage/documents/${document.title}`}
                         type="application/pdf"
                         className="w-full h-full"
                     >
                         <p>
-                            It appears you don't have a PDF plugin for this browser.
-                            No biggie... you can{' '}
-                            <a href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/storage/documents/${document.title}.pdf`}>
-                                click here to download the PDF file.
+                            PDFプラグインがインストールされていません。
+                            <a href={`${API_BASE_URL}/storage/documents/${document.title}`}>
+                                PDFをダウンロード
                             </a>
                         </p>
                     </object>
@@ -151,16 +162,17 @@ const DocumentDetail = () => {
 
                         {/* Edit and Save Buttons */}
                         <div className="flex items-center gap-4">
-
                             {isEditing ? (
                                 <Button onClick={handleSave} className="bg-green-500 text-white">
-                                    保管
+                                    保存
                                 </Button>
-                            ) : (<Button onClick={handleEdit} className="bg-blue-500 text-white">
-                                編集
-                            </Button>)}
+                            ) : (
+                                <Button onClick={handleEdit} className="bg-blue-500 text-white">
+                                    編集
+                                </Button>
+                            )}
                             <Button onClick={handleAllSave} className="bg-blue-500 text-white">
-                                全体保管
+                                全体保存
                             </Button>
                         </div>
                     </div>

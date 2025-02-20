@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from './contexts/AuthContext'
 
 type Document = {
   id: string;
@@ -48,6 +49,7 @@ export default function Home() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
+  const { token } = useAuth()
   const searchQuery = searchParams.get('search')
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // Use the base URL from .env
 
@@ -72,7 +74,6 @@ export default function Home() {
     try {
       const response = await fetch(`${API_BASE_URL}/doc-list`)
       const data = await response.json()
-      console.log(data);
       setDocuments(data)
     } catch (error) {
       toast({
@@ -107,12 +108,16 @@ export default function Home() {
     try {
       const response = await fetch(`${API_BASE_URL}/doc-delete?id=${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
       const data = await response.json()
       if (data.status) {
         toast({
           title: "成功",
-          description: "文献を削除しました",
+          description: data.message,
         })
         if (searchQuery) {
           fetchSearchResults(searchQuery)
@@ -200,58 +205,68 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {documents.map((doc) => (
-          <Card key={doc.id} className="flex flex-col">
-            <div className="relative pt-[56.25%]">
-              <img
-                src={`${API_BASE_URL}/storage/thumbnails/${doc.title.split('.')[0]}/1.jpg`}
-                alt={doc.title.split('.')[0]}
-                className="absolute top-0 left-0 w-full h-full object-cover rounded-t-lg"
-              />
-            </div>
-            <CardHeader>
-              <CardTitle>{doc.title}</CardTitle>
-              <CardDescription>
-                種類: {doc.type === 1 ? "原文" : doc.type === 2 ? "注釈" : "翻訳"}
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="mt-auto flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/detail?id=${doc.id}`)}
-              >
-                <FileSearch className="mr-2 h-4 w-4" />
-                詳細
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    削除
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>文献を削除しますか？</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      この操作は取り消すことができません。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(doc.id)}
-                    >
+    <div className="container mx-auto px-4 py-8">
+      {/* Welcome Section */}
+      <section className="mb-12">
+        <h1 className="text-3xl font-bold mb-4">古典籍デジタルアーカイブへようこそ</h1>
+        <p className="text-lg text-muted-foreground">
+          日本・中国の古典籍をデジタル化し、検索・閲覧できるプラットフォームです。
+        </p>
+      </section>
+
+      <div className="container mx-auto p-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {documents?.map((doc) => (
+            <Card key={doc.id} className="flex flex-col">
+              <div className="relative pt-[56.25%]">
+                <img
+                  src={`${API_BASE_URL}/storage/thumbnails/${doc.title.split('.')[0]}/1.jpg`}
+                  alt={doc.title.split('.')[0]}
+                  className="absolute top-0 left-0 w-full h-full object-cover rounded-t-lg"
+                />
+              </div>
+              <CardHeader>
+                <CardTitle>{doc.title}</CardTitle>
+                <CardDescription>
+                  種類: {doc.type === 1 ? "原文" : doc.type === 2 ? "注釈" : "翻訳"}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="mt-auto flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/detail?id=${doc.id}`)}
+                >
+                  <FileSearch className="mr-2 h-4 w-4" />
+                  詳細
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
                       削除
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardFooter>
-          </Card>
-        ))}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>文献を削除しますか？</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        この操作は取り消すことができません。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(doc.id)}
+                      >
+                        削除
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   )

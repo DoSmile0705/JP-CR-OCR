@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,15 +11,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Search, Upload, User, Moon, Sun, Laptop } from 'lucide-react'
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu"
+import Link from 'next/link'
+import { Search, Upload, User, Moon, Sun, Laptop, LogOut } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/app/contexts/AuthContext'
 
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const { setTheme } = useTheme()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, token, logout } = useAuth()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,18 +40,23 @@ export default function Navbar() {
     }
   }
 
+  const handleSignOut = () => {
+    logout()
+    router.push('/auth/signin')
+  }
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4">
         <div className="mr-4 hidden md:flex">
           <a href="/" className="mr-6 flex items-center space-x-2">
-            <Search className="h-6 w-6" />
+            {/* <Search className="h-6 w-6" /> */}
             <span className="hidden font-bold sm:inline-block">
-              古典文献検索
+              中国戯曲日本語注釈データベース
             </span>
           </a>
         </div>
-        
+
         <div className="flex flex-1 items-center space-x-2">
           <form onSubmit={handleSearch} className="w-full max-w-xl">
             <div className="relative">
@@ -52,13 +69,14 @@ export default function Navbar() {
               />
             </div>
           </form>
-          <Button variant="default" onClick={() => router.push('/upload')}>
-            <Upload className="mr-2 h-4 w-4" />
-            文献登録
-          </Button>
-        </div>
-
-        <div className="ml-auto flex items-center space-x-2">
+          {token && (
+            <>
+              <Button variant="default" onClick={() => router.push('/upload')}>
+                <Upload className="mr-2 h-4 w-4" />
+                文献登録
+              </Button>
+            </>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -82,7 +100,9 @@ export default function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+        </div>
+
+        {token ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -90,17 +110,79 @@ export default function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>マイアカウント</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {user?.username || 'マイアカウント'}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>プロフィール</DropdownMenuItem>
               <DropdownMenuItem>投稿履歴</DropdownMenuItem>
               <DropdownMenuItem>ブックマーク</DropdownMenuItem>
               <DropdownMenuItem>設定</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>ログアウト</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                ログアウト
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        ) : (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => router.push('/auth/signin')}>
+              ログイン
+            </Button>
+            <Button variant="outline" onClick={() => router.push('/auth/register')}>
+              新規登録
+            </Button>
+          </div>
+        )}
+
+
+      </div>
+      {/* Navigation Menu */}
+      <div className="container px-4 pb-2">
+        <NavigationMenu>
+          <NavigationMenuList className="gap-2">
+            <NavigationMenuItem>
+              <Link href="/about" legacyBehavior passHref>
+                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                  本ページについて
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+
+            <NavigationMenuItem>
+              <Link href="/news" legacyBehavior passHref>
+                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                  お知らせ
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+
+            <NavigationMenuItem>
+              <Link href="/search" legacyBehavior passHref>
+                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                  検索
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+
+            <NavigationMenuItem>
+              <Link href="/reports" legacyBehavior passHref>
+                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                  報告書、資料等
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+
+            <NavigationMenuItem>
+              <Link href="/contact" legacyBehavior passHref>
+                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                  お問い合わせ
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
       </div>
     </nav>
   )
