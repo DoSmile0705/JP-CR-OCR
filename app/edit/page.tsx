@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,7 +53,7 @@ export default function DocumentEdit() {
     const [selectedAnnotation, setSelectedAnnotation] = useState<number | null>(null);
     const { token } = useAuth();
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-    const documentId = searchParams.get('id');
+    const documentId = searchParams.get('id') ?? "1";
     const [pdfCurrentPage, setPdfCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const pageNavigationPluginInstance = pageNavigationPlugin();
@@ -70,7 +72,9 @@ export default function DocumentEdit() {
         // When total pages is set or changes, ensure document has enough pages
         console.log("totalPages of current document", totalPages);
         const processedData = {
-            ...document,
+            id: documentId,
+            title: document?.title ?? "Untitled Document", // Provide a default title
+            type: document?.type ?? 0, // Provide a default type (e.g., 0 or any meaningful default)
             pages: document?.pages?.length ? document.pages : generateEmptyPages(totalPages),
             thumbnails: document?.thumbnails || []
         };
@@ -85,7 +89,7 @@ export default function DocumentEdit() {
 
         console.log("processedData", processedData);
 
-        setDocument(processedData);
+        setDocument({ ...processedData, id: documentId });
     }, [totalPages]);
 
     // useEffect(() => {
@@ -229,7 +233,7 @@ export default function DocumentEdit() {
 
         const updatedPages = [...document.pages];
         updatedPages[currentPage - 1].annotations.splice(index, 1);
-        
+
         setDocument({ ...document, pages: updatedPages });
         setSelectedAnnotation(null);
     };
@@ -268,67 +272,95 @@ export default function DocumentEdit() {
 
     const currentPageData = getCurrentPage();
 
+    const isPdf = document.title.toLowerCase().endsWith('.pdf');
+
     return (
         <div className="flex h-[calc(100vh-4rem)]">
             {/* Left side: PDF Viewer */}
             <div className="w-1/2 h-full border-r p-4">
-                <div className="flex flex-col items-center">
-                    <div className="h-[80vh] border rounded-lg overflow-hidden w-full">
-                        <Worker workerUrl={`https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js`}>
-                            <Viewer
-                                fileUrl={`${API_BASE_URL}/storage/documents/${document.title}`}
-                                defaultScale={SpecialZoomLevel.PageFit}
-                                onPageChange={(e) => handlePdfPageChange(e.currentPage)}
-                                onDocumentLoad={(e) => setTotalPages(e.doc.numPages)}
-                                initialPage={pdfCurrentPage}
-                                plugins={[pageNavigationPluginInstance]}
-                            />
-                        </Worker>
+                {isPdf ? (
+                    <div className="flex flex-col items-center">
+                        <div className="h-[80vh] border rounded-lg overflow-hidden w-full">
+                            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js`}>
+                                <Viewer
+                                    fileUrl={`${API_BASE_URL}/storage/documents/${document.title}`}
+                                    defaultScale={SpecialZoomLevel.PageFit}
+                                    onPageChange={(e) => handlePdfPageChange(e.currentPage)}
+                                    onDocumentLoad={(e) => setTotalPages(e.doc.numPages)}
+                                    initialPage={pdfCurrentPage}
+                                    plugins={[pageNavigationPluginInstance]}
+                                />
+                            </Worker>
+                        </div>
+
+                        {/* PDF Navigation Buttons */}
+                        <div className="flex items-center justify-center space-x-4 mt-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => handlePdfPageChange(0)}
+                                disabled={pdfCurrentPage === 0}
+                                className="w-1/5"
+                            >
+                                <ChevronsLeft className="h-4 w-4 mr-2" /> 最初のページ
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => handlePdfPageChange(Math.max(pdfCurrentPage - 1, 0))}
+                                disabled={pdfCurrentPage === 0}
+                                className="w-1/5"
+                            >
+                                <ChevronLeft className="h-4 w-4 mr-2" /> 前のページ
+                            </Button>
+
+                            <span className="text-sm w-1/5 text-center">
+                                {pdfCurrentPage + 1} / {totalPages}
+                            </span>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => handlePdfPageChange(Math.min(pdfCurrentPage + 1, totalPages - 1))}
+                                disabled={pdfCurrentPage === totalPages - 1}
+                                className="w-1/5"
+                            >
+                                次のページ <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => handlePdfPageChange(totalPages - 1)}
+                                disabled={pdfCurrentPage === totalPages - 1}
+                                className="w-1/5"
+                            >
+                                最後のページ <ChevronsRight className="h-4 w-4 ml-2" />
+                            </Button>
+                        </div>
                     </div>
-
-                    {/* PDF Navigation Buttons */}
-                    <div className="flex items-center justify-center space-x-4 mt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => handlePdfPageChange(0)}
-                            disabled={pdfCurrentPage === 0}
-                            className="w-1/5"
-                        >
-                            <ChevronsLeft className="h-4 w-4 mr-2" /> 最初のページ
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            onClick={() => handlePdfPageChange(Math.max(pdfCurrentPage - 1, 0))}
-                            disabled={pdfCurrentPage === 0}
-                            className="w-1/5"
-                        >
-                            <ChevronLeft className="h-4 w-4 mr-2" /> 前のページ
-                        </Button>
-
-                        <span className="text-sm w-1/5 text-center">
-                            {pdfCurrentPage + 1} / {totalPages}
-                        </span>
-
-                        <Button
-                            variant="outline"
-                            onClick={() => handlePdfPageChange(Math.min(pdfCurrentPage + 1, totalPages - 1))}
-                            disabled={pdfCurrentPage === totalPages - 1}
-                            className="w-1/5"
-                        >
-                            次のページ <ChevronRight className="h-4 w-4 ml-2" />
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            onClick={() => handlePdfPageChange(totalPages - 1)}
-                            disabled={pdfCurrentPage === totalPages - 1}
-                            className="w-1/5"
-                        >
-                            最後のページ <ChevronsRight className="h-4 w-4 ml-2" />
-                        </Button>
+                ) : (
+                    <div className="relative border rounded-lg overflow-hidden bg-background w-full flex-1">
+                        <TransformWrapper>
+                            {({ zoomIn, zoomOut, resetTransform }) => (
+                                <>
+                                    <div className="flex space-x-2 mb-2">
+                                        <Button variant="outline" onClick={() => zoomIn()}>+</Button>
+                                        <Button variant="outline" onClick={() => zoomOut()}>-</Button>
+                                        <Button variant="outline" onClick={() => resetTransform()}>リセット</Button>
+                                    </div>
+                                    <TransformComponent wrapperStyle={{ width: "100%", height: "calc(100% - 40px)" }}>
+                                        <Image
+                                            src={`${API_BASE_URL}/storage/documents/${document.title}`}
+                                            alt={`Page ${currentPage}`}
+                                            className="w-full h-full object-contain"
+                                            width={1000}
+                                            height={1000}
+                                        />
+                                    </TransformComponent>
+                                </>
+                            )}
+                        </TransformWrapper>
                     </div>
-                </div>
+                )
+                }
             </div>
 
             {/* Right side: Editor */}

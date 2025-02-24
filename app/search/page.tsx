@@ -16,6 +16,7 @@ import { Search, BookOpen, PenTool, Languages, FileSearch, ChevronDown } from "l
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from '../contexts/AuthContext'
+import Image from 'next/image'
 
 type Document = {
   id: string;
@@ -26,8 +27,19 @@ type Document = {
 type SearchResult = {
   id: string;
   document_title: string;
-  pages: { page_number: number, lines: string[] }[]
-}
+  total_matches: number;
+  matches: {
+    title_matches?: { context: string }[];
+    page_matches?: {
+      page_number: number;
+      matches: {
+        type: "text" | "translation" | "annotation_name" | "annotation_type" | "annotation_content";
+        context: string;
+      }[];
+    }[];
+  };
+};
+
 
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -120,10 +132,12 @@ export default function Home() {
 
               <div className="flex cursor-pointer" onClick={() => toggleCard(result.id)}>
                 <div className="w-1/3 py-3 bg-gray-200 flex justify-center">
-                  <img
+                  <Image
                     src={`${API_BASE_URL}/storage/thumbnails/${result.document_title.split('.')[0]}/1.jpg`}
                     alt="サムネイル"
                     className="w-20 h-auto object-cover"
+                    width={1000}
+                    height={1000}
                   />
                 </div>
                 <div className="w-2/3 p-4 flex flex-col">
@@ -219,10 +233,12 @@ export default function Home() {
           {documents?.map((doc) => (
             <Card key={doc.id} className="flex flex-col">
               <div className="relative pt-[56.25%]">
-                <img
+                <Image
                   src={`${API_BASE_URL}/storage/thumbnails/${doc.title.split('.')[0]}/1.jpg`}
                   alt={doc.title.split('.')[0]}
                   className="absolute top-0 left-0 w-full h-full object-cover rounded-t-lg"
+                  width={1000}
+                  height={1000}
                 />
               </div>
               <CardHeader>

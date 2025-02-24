@@ -10,6 +10,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card"
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from '../contexts/AuthContext'
@@ -50,6 +51,26 @@ export default function DocumentViewer() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/doc-delete/${id}`, {
+        method: 'DELETE',
+      })  
+      if (response.ok) {
+        toast({
+          title: "成功",
+          description: "文献を削除しました",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "文献の削除に失敗しました",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -74,10 +95,12 @@ export default function DocumentViewer() {
         {documents.map((doc) => (
           <Card key={doc.id} className="flex flex-col">
             <div className="relative pt-[56.25%]">
-              <img
+              <Image
                 src={`${API_BASE_URL}/storage/thumbnails/${doc.title.split('.')[0]}/1.jpg`}
                 alt={doc.title}
                 className="absolute top-0 left-0 w-full h-full object-contain rounded-t-lg" 
+                width={1000}
+                height={1000}
               />
             </div>
             <CardHeader>

@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic';
 import { Worker, Viewer } from "@react-pdf-viewer/core";
 import { SpecialZoomLevel } from "@react-pdf-viewer/core";
 import { pageNavigationPlugin } from '@react-pdf-viewer/page-navigation';
+import Image from 'next/image'
 import "@react-pdf-viewer/core/lib/styles/index.css";
 
 const PdfViewer = dynamic(() => import('@/components/PdfViewer'), { ssr: false });
@@ -141,10 +142,12 @@ export default function DocumentDetail() {
                   <Button variant="outline" onClick={() => resetTransform()}>リセット</Button>
                 </div>
                 <TransformComponent wrapperStyle={{ width: "100%", height: "calc(100% - 40px)" }}>
-                  <img
+                  <Image
                     src={`${API_BASE_URL}/storage/documents/${document.title}`}
                     alt={`Page ${currentPage}`}
                     className="w-full h-full object-contain"
+                    width={1000}
+                    height={1000}
                   />
                 </TransformComponent>
               </>

@@ -12,14 +12,15 @@ export async function POST(request: Request) {
     const subject = formData.get('subject') as string;
   
     const transporter = nodemailer.createTransport({
-      host: process.env.NEXT_PUBLIC_EMAIL_HOST,
-      port: process.env.NEXT_PUBLIC_EMAIL_PORT,
-      secure: false,
-      auth: {
-        user: process.env.NEXT_PUBLIC_EMAIL_USER,
-        pass: process.env.NEXT_PUBLIC_EMAIL_PASS,
-      },
-    });
+        service: 'smtp',
+        host: process.env.NEXT_PUBLIC_EMAIL_HOST as string,
+        port: Number(process.env.NEXT_PUBLIC_EMAIL_PORT),
+        secure: false,
+        auth: {
+            user: process.env.NEXT_PUBLIC_EMAIL_USER,
+            pass: process.env.NEXT_PUBLIC_EMAIL_PASS,
+        },
+    } as nodemailer.TransportOptions);
   
     try {
       await transporter.sendMail({
