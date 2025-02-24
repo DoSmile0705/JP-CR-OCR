@@ -12,18 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, BookOpen, PenTool, Languages, Trash2, FileSearch, ChevronDown } from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { Search, BookOpen, PenTool, Languages, FileSearch, ChevronDown } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from '../contexts/AuthContext'
@@ -50,7 +39,7 @@ export default function Home() {
   const router = useRouter()
   const { toast } = useToast()
   const { token } = useAuth()
-  const searchQuery = searchParams.get('search')
+  const searchQuery = searchParams.get('keyword')
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // Use the base URL from .env
 
   useEffect(() => {
@@ -68,7 +57,6 @@ export default function Home() {
   const togglePage = (pageNumber: number) => {
     setExpandedPages((prev) => ({ ...prev, [pageNumber]: !prev[pageNumber] }))
   }
-
 
   const fetchDocuments = async () => {
     try {
@@ -89,10 +77,10 @@ export default function Home() {
   const fetchSearchResults = async (keyword: string) => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/search-keyword?keyword=${encodeURIComponent(keyword)}`)
+      const response = await fetch(`${API_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}`)
       const data = await response.json()
       setSearchResults(data)
-
+      console.log(data)
     } catch (error) {
       toast({
         title: "エラー",
@@ -104,35 +92,9 @@ export default function Home() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/doc-delete?id=${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      const data = await response.json()
-      if (data.status) {
-        toast({
-          title: "成功",
-          description: data.message,
-        })
-        if (searchQuery) {
-          fetchSearchResults(searchQuery)
-        } else {
-          fetchDocuments()
-        }
-      }
-    } catch (error) {
-      toast({
-        title: "エラー",
-        description: "文献の削除に失敗しました",
-        variant: "destructive",
-      })
-    }
-  }
+  const navigateToPage = (documentId: string, pageNumber: number) => {
+    router.push(`/detail?id=${documentId}&page=${pageNumber}`);
+  };
 
   if (loading) {
     return (
@@ -169,26 +131,64 @@ export default function Home() {
                     {result.document_title}
                     <ChevronDown className={`transform ${expandedCard === result.id ? 'rotate-180' : ''}`} />
                   </h3>
-                  <span>検索結果 {result.pages.reduce((total, page) => total + page.lines.length, 0)} 件</span>
+                  <span>検索結果 {result.total_matches} 件</span>
                 </div>
               </div>
               {expandedCard === result.id && (
                 <ScrollArea className="h-[400px] overflow-y-auto p-4 border-2 border-gray-300 rounded-lg">
-                  {result.pages.map((page) => (
+                  {/* Title matches */}
+                  {result.matches.title_matches && result.matches.title_matches.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-bold mb-2">タイトルの一致</h4>
+                      <ul className="ml-4 list-disc">
+                        {result.matches.title_matches.map((match, index) => (
+                          <li key={index} className="text-sm text-muted-foreground">
+                            {match.context}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Page matches */}
+                  {result.matches.page_matches && result.matches.page_matches.map((page) => (
                     <div key={page.page_number} className="mt-2 border-b border-gray-200 pb-2">
-                      <p className="font-bold cursor-pointer flex items-center" onClick={() => togglePage(page.page_number)}>
-                        [ページ {page.page_number}]
-                        <ChevronDown className={`ml-2 transform ${expandedPages[page.page_number] ? 'rotate-180' : ''}`} />
+                      <p
+                        className="font-bold cursor-pointer flex items-center "
+
+                      >
+                        <span 
+                          onClick={() => {
+                            navigateToPage(result.id, page.page_number);
+                          }}
+                          className="underline hover:text-primary"
+                        >[ページ {page.page_number}]</span>
+                        <ChevronDown className={`ml-2 transform ${expandedPages[page.page_number] ? 'rotate-180' : ''}`} onClick={() => togglePage(page.page_number)} />
                       </p>
                       {expandedPages[page.page_number] && (
                         <ul className="ml-4 list-disc">
-                          {page.lines.map((line, index) => (
-                            <li key={index} className="text-sm text-muted-foreground">{line}</li>
+                          {page.matches.map((match, index) => (
+                            <li key={index} className="text-sm text-muted-foreground">
+                              [{match.type === 'text' ? '本文' :
+                                match.type === 'translation' ? '翻訳' :
+                                  match.type === 'annotation_name' ? '注釈対象' :
+                                    match.type === 'annotation_type' ? '注釈類別' :
+                                      match.type === 'annotation_content' ? '注釈内容' :
+                                        '不明'}: {match.context}]
+                            </li>
                           ))}
                         </ul>
                       )}
                     </div>
                   ))}
+
+                  {/* No matches message */}
+                  {(!result.matches.title_matches || result.matches.title_matches.length === 0) &&
+                    (!result.matches.page_matches || result.matches.page_matches.length === 0) && (
+                      <p className="text-center text-muted-foreground">
+                        一致する結果が見つかりませんでした
+                      </p>
+                    )}
                 </ScrollArea>
               )}
               <CardFooter className="flex justify-end space-x-2 p-4 bg-muted/50">
@@ -239,30 +239,6 @@ export default function Home() {
                   <FileSearch className="mr-2 h-4 w-4" />
                   詳細
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      削除
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>文献を削除しますか？</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        この操作は取り消すことができません。
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(doc.id)}
-                      >
-                        削除
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </CardFooter>
             </Card>
           ))}

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { ChevronDown, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronDown, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { SpecialZoomLevel, RenderViewer } from "@react-pdf-viewer/core";
 import { pageNavigationPlugin } from '@react-pdf-viewer/page-navigation';
@@ -64,7 +64,7 @@ export default function DocumentEdit() {
     }, [documentId]);
 
     useEffect(() => {
-        if(totalPages == 0) {
+        if (totalPages == 0) {
             return;
         }
         // When total pages is set or changes, ensure document has enough pages
@@ -89,7 +89,7 @@ export default function DocumentEdit() {
     }, [totalPages]);
 
     // useEffect(() => {
-        // console.log(document);
+    // console.log(document);
     // }, [document]);
 
     useEffect(() => {
@@ -116,7 +116,7 @@ export default function DocumentEdit() {
     const generateSampleAnnotations = () => {
         return [{
             target_text: "注釈",
-            type: "注釈の種類",   
+            type: "注釈の種類",
             content: "注釈の内容"
         }];
     };
@@ -183,7 +183,7 @@ export default function DocumentEdit() {
         const currentPageIndex = currentPage - 1;
 
         console.log(updatedPages[currentPageIndex]);
-        switch(type) {
+        switch (type) {
             case 'text':
                 updatedPages[currentPageIndex]!.text = value;
                 break;
@@ -224,6 +224,16 @@ export default function DocumentEdit() {
         setSelectedAnnotation(updatedPages[currentPage - 1].annotations.length - 1);
     };
 
+    const deleteAnnotation = (index: number) => {
+        if (!document) return;
+
+        const updatedPages = [...document.pages];
+        updatedPages[currentPage - 1].annotations.splice(index, 1);
+        
+        setDocument({ ...document, pages: updatedPages });
+        setSelectedAnnotation(null);
+    };
+
     const handleSave = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/doc-edit/${documentId}`, {
@@ -245,7 +255,7 @@ export default function DocumentEdit() {
             }
         } catch (error) {
             toast({
-                title: "エラー", 
+                title: "エラー",
                 description: "保存に失敗しました",
                 variant: "destructive",
             });
@@ -282,6 +292,7 @@ export default function DocumentEdit() {
                             variant="outline"
                             onClick={() => handlePdfPageChange(0)}
                             disabled={pdfCurrentPage === 0}
+                            className="w-1/5"
                         >
                             <ChevronsLeft className="h-4 w-4 mr-2" /> 最初のページ
                         </Button>
@@ -290,11 +301,12 @@ export default function DocumentEdit() {
                             variant="outline"
                             onClick={() => handlePdfPageChange(Math.max(pdfCurrentPage - 1, 0))}
                             disabled={pdfCurrentPage === 0}
+                            className="w-1/5"
                         >
                             <ChevronLeft className="h-4 w-4 mr-2" /> 前のページ
                         </Button>
 
-                        <span className="text-sm">
+                        <span className="text-sm w-1/5 text-center">
                             {pdfCurrentPage + 1} / {totalPages}
                         </span>
 
@@ -302,6 +314,7 @@ export default function DocumentEdit() {
                             variant="outline"
                             onClick={() => handlePdfPageChange(Math.min(pdfCurrentPage + 1, totalPages - 1))}
                             disabled={pdfCurrentPage === totalPages - 1}
+                            className="w-1/5"
                         >
                             次のページ <ChevronRight className="h-4 w-4 ml-2" />
                         </Button>
@@ -310,6 +323,7 @@ export default function DocumentEdit() {
                             variant="outline"
                             onClick={() => handlePdfPageChange(totalPages - 1)}
                             disabled={pdfCurrentPage === totalPages - 1}
+                            className="w-1/5"
                         >
                             最後のページ <ChevronsRight className="h-4 w-4 ml-2" />
                         </Button>
@@ -318,8 +332,8 @@ export default function DocumentEdit() {
             </div>
 
             {/* Right side: Editor */}
-            <div className="w-1/2 h-full flex flex-col p-4 overflow-y-auto">
-                <div className="space-y-4 flex-1">
+            <div className="w-1/2 flex flex-col p-4 overflow-y-auto">
+                <div className="space-y-4">
                     {/* Main Text */}
                     <div>
                         <label className="block text-sm font-medium mb-2">原文</label>
@@ -356,14 +370,24 @@ export default function DocumentEdit() {
                         <div className="space-y-2">
                             {(currentPageData?.annotations || []).map((annotation, index) => (
                                 <div key={index} className="border rounded-lg p-2">
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full flex justify-between"
-                                        onClick={() => setSelectedAnnotation(index === selectedAnnotation ? null : index)}
-                                    >
-                                        <span>注釈 {index + 1}</span>
-                                        <ChevronDown className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex justify-between items-center">
+                                        <Button
+                                            variant="ghost"
+                                            className="flex-1 flex justify-between"
+                                            onClick={() => setSelectedAnnotation(index === selectedAnnotation ? null : index)}
+                                        >
+                                            <span>注釈 {index + 1}</span>
+                                            <ChevronDown className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-red-500 hover:text-red-700"
+                                            onClick={() => deleteAnnotation(index)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                     {selectedAnnotation === index && (
                                         <div className="mt-2 space-y-2">
                                             <Input
@@ -390,12 +414,15 @@ export default function DocumentEdit() {
                 </div>
 
                 {/* Save Button */}
-                <Button
-                    onClick={handleSave}
-                    className="mt-4"
-                >
-                    保存
-                </Button>
+                <div className='flex justify-center w-1/4 max-w-md mx-auto'>
+                    <Button
+                        onClick={handleSave}
+                        className="mt-4"
+                    >
+                        保存
+                    </Button>
+                </div>
+
             </div>
         </div>
     );

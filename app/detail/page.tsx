@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import dynamic from 'next/dynamic';
+import { Worker, Viewer } from "@react-pdf-viewer/core";
+import { SpecialZoomLevel } from "@react-pdf-viewer/core";
+import { pageNavigationPlugin } from '@react-pdf-viewer/page-navigation';
+import "@react-pdf-viewer/core/lib/styles/index.css";
 
 const PdfViewer = dynamic(() => import('@/components/PdfViewer'), { ssr: false });
 
@@ -18,18 +22,34 @@ type Document = {
 
 export default function DocumentDetail() {  
   const [document, setDocument] = useState<Document | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
   const docId = searchParams.get('id')
+  const initialPage = parseInt(searchParams.get('page') || '1')
+
+  const pageNavigationPluginInstance = pageNavigationPlugin();
+  const { jumpToPage } = pageNavigationPluginInstance;
 
   useEffect(() => {
     if (docId) {
       fetchDocumentDetails()
     }
   }, [docId])
+
+  useEffect(() => {
+    // Handle initial page from search results
+    if (!loading && document) {
+      const targetPage = initialPage - 1 // Convert to 0-based index
+      if (targetPage >= 0 && targetPage < totalPages) {
+        setCurrentPage(targetPage)
+        jumpToPage(targetPage)
+      }
+    }
+  }, [loading, document, initialPage, totalPages])
 
   const fetchDocumentDetails = async () => {
     try {
@@ -44,18 +64,6 @@ export default function DocumentDetail() {
       })
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1)
-    }
-  }
-
-  const handleNextPage = () => {
-    if (document && currentPage < document.total_pages) {
-      setCurrentPage(prev => prev + 1)
     }
   }
 
@@ -86,7 +94,41 @@ export default function DocumentDetail() {
       
       {isPdf ? (
         <div className="flex-1">
-          <PdfViewer fileUrl={`${API_BASE_URL}/storage/documents/${document.title}`} />
+          <div className="h-[80vh] border rounded-lg overflow-hidden w-full">
+            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js`}>
+              <Viewer
+                fileUrl={`${API_BASE_URL}/storage/documents/${document.title}`}
+                defaultScale={SpecialZoomLevel.PageFit}
+                onPageChange={(e) => setCurrentPage(e.currentPage)}
+                onDocumentLoad={(e) => setTotalPages(e.doc.numPages)}
+                initialPage={currentPage}
+                plugins={[pageNavigationPluginInstance]}
+              />
+            </Worker>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-center space-x-4 mt-4">
+            <Button variant="outline" onClick={() => setCurrentPage(0)} disabled={currentPage === 0}>
+              <ChevronsLeft className="h-4 w-4 mr-2" /> 最初のページ
+            </Button>
+
+            <Button variant="outline" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))} disabled={currentPage === 0}>
+              <ChevronLeft className="h-4 w-4 mr-2" /> 前のページ
+            </Button>
+
+            <span className="text-sm">
+              {currentPage + 1} / {totalPages}
+            </span>
+
+            <Button variant="outline" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))} disabled={currentPage === totalPages - 1}>
+              次のページ <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+
+            <Button variant="outline" onClick={() => setCurrentPage(totalPages - 1)} disabled={currentPage === totalPages - 1}>
+              最後のページ <ChevronsRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="relative border rounded-lg overflow-hidden bg-background w-full flex-1">
@@ -110,30 +152,6 @@ export default function DocumentDetail() {
           </TransformWrapper>
         </div>
       )}
-
-      {/* <div className="flex items-center justify-center mt-4 space-x-4">
-        <Button
-          variant="outline"
-          onClick={handlePreviousPage}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          前のページ
-        </Button>
-        
-        <span className="text-sm">
-          {currentPage} / {document.total_pages}
-        </span>
-        
-        <Button
-          variant="outline"
-          onClick={handleNextPage}
-          disabled={currentPage === document.total_pages}
-        >
-          次のページ
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div> */}
     </div>
   )
 }

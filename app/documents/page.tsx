@@ -13,7 +13,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from '../contexts/AuthContext'
-import { FileText, Edit, BookOpen } from 'lucide-react'
+import { FileText, Edit, BookOpen, Trash2 } from 'lucide-react'
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 
 type Document = {
   id: string;
@@ -100,6 +101,30 @@ export default function DocumentViewer() {
                   編集
                 </Button>
               )}
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      削除
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>文献を削除しますか？</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        この操作は取り消すことができません。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(doc.id)}
+                      >
+                        削除
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
             </CardFooter>
           </Card>
         ))}
