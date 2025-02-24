@@ -11,7 +11,6 @@ import { useAuth } from '@/app/contexts/AuthContext';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState<number | "">("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -25,10 +24,10 @@ export default function UploadPage() {
   }, [token, router]);
 
   const handleUpload = async () => {
-    if (!file || fileType === "") {
+    if (!file) {
       toast({
         title: "エラー",
-        description: "ファイルとファイルタイプを選択してください",
+        description: "ファイルを選択してください",
         variant: "destructive",
       });
       return;
@@ -37,7 +36,6 @@ export default function UploadPage() {
     setIsLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("type", fileType.toString());
     console.log(formData);
     try {
       const response = await fetch(`${API_BASE_URL}/upload`, {
@@ -73,29 +71,12 @@ export default function UploadPage() {
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">ファイルアップロード</h2>
       <div className="flex gap-4 flex-col">
-        <Label>ファイル:</Label>
+        <Label>文献資料（PDFもしくは画像）をアップロードしてください。</Label>
         <Input
           type="file"
           onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
           className="mb-4"
         />
-        <div className="flex flex-row items-center">
-
-          <Label>ファイルタイプ:</Label>
-          <div className="flex items-center">
-
-            <Input
-              type="number"
-              placeholder="1/2/3"
-              value={fileType}
-              onChange={(e) => setFileType(e.target.value ? Number(e.target.value) : "")}
-              className="ml-10 w-20"
-              min="1"
-              max="4"
-            />
-          </div>
-
-        </div>
 
         <div className="flex justify-center">
           <Button onClick={handleUpload} disabled={isLoading} className="w-20">
@@ -103,7 +84,6 @@ export default function UploadPage() {
           </Button>
         </div>
       </div>
-
 
       {isLoading && (
         <Dialog.Root open={isLoading}>

@@ -6,6 +6,7 @@ interface User {
   id: number
   username: string
   email: string
+  role: string
 }
 
 interface AuthContextType {
@@ -59,4 +60,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
-} 
+}

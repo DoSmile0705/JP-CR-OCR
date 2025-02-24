@@ -69,7 +69,7 @@ export default function Navbar() {
               />
             </div>
           </form>
-          {token && (
+          {token && user?.role === 'researcher' && (
             <>
               <Button variant="default" onClick={() => router.push('/upload')}>
                 <Upload className="mr-2 h-4 w-4" />
@@ -167,7 +167,7 @@ export default function Navbar() {
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <Link href="/reports" legacyBehavior passHref>
+              <Link href="/documents" legacyBehavior passHref>
                 <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
                   報告書、資料等
                 </NavigationMenuLink>

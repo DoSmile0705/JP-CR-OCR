@@ -1,185 +1,139 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/app/contexts/AuthContext';
-import { fetchWithAuth } from '@/app/utils/api';
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useToast } from "@/components/ui/use-toast"
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import dynamic from 'next/dynamic';
+
+const PdfViewer = dynamic(() => import('@/components/PdfViewer'), { ssr: false });
 
 type Document = {
-    id: string;
-    title: string;
-    type: number;
-    text: string[];
-};
+  id: string
+  title: string
+  total_pages: number
+}
 
-const DocumentDetail = () => {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [document, setDocument] = useState<Document | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [isEditing, setIsEditing] = useState(false);
-    const documentId = searchParams.get('id');
-    const { token } = useAuth();
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+export default function DocumentDetail() {  
+  const [document, setDocument] = useState<Document | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+  const docId = searchParams.get('id')
 
-    useEffect(() => {
-        if (documentId) {
-            fetchDocumentDetail(documentId);
-        }
-    }, [documentId, token, router]);
-
-    const fetchDocumentDetail = async (id: string) => {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/doc-detail?id=${id}`);
-        const data = await response.json();
-        setDocument(data);
-    };
-
-    // Fix: Enforce valid page boundaries
-    const handlePageChange = (page: number) => {
-        if (document) {
-            if (page >= 1 && page <= document.text.length) {
-                setCurrentPage(page);
-            }
-        }
-    };
-
-    const handleEdit = () => {
-        setIsEditing(!isEditing);
-    };
-
-    const handleSave = async () => {
-        setIsEditing(!isEditing);
-    };
-
-    const handleAllSave = async () => {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/doc-edit`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                text: document?.text,
-                id: documentId,
-            }),
-        });
-        const data = await response.json();
-        if (data.status) {
-            toast({
-                title: "成功",
-                description: data.message,
-            })
-            router.push('/');
-        }
-        console.log(data);
+  useEffect(() => {
+    if (docId) {
+      fetchDocumentDetails()
     }
+  }, [docId])
 
-    if (!document) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                    <p className="text-muted-foreground">ローディング中...</p>
-                </div>
-            </div>
-        );
+  const fetchDocumentDetails = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/doc-detail/${docId}`)
+      const data = await response.json()
+      setDocument(data)
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: "文献の詳細情報の取得に失敗しました",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
+  }
 
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (document && currentPage < document.total_pages) {
+      setCurrentPage(prev => prev + 1)
+    }
+  }
+
+  if (loading) {
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)]">
-            <div className="w-full p-10 flex flex-row h-full">
-                {/* Left Section: PDF Viewer */}
-                <div className="w-1/2 flex flex-col">
-                    <object
-                        data={`${API_BASE_URL}/storage/documents/${document.title}`}
-                        type="application/pdf"
-                        className="w-full h-full"
-                    >
-                        <p>
-                            PDFプラグインがインストールされていません。
-                            <a href={`${API_BASE_URL}/storage/documents/${document.title}`}>
-                                PDFをダウンロード
-                            </a>
-                        </p>
-                    </object>
-                </div>
-
-                {/* Right Section: Text Viewer/Editor */}
-                <div className="w-1/2 flex flex-col">
-                    <div className="overflow-y-auto h-full p-4 border-l">
-                        {isEditing ? (
-                            <textarea
-                                value={document.text[currentPage - 1]}
-                                onChange={(e) =>
-                                    setDocument({
-                                        ...document,
-                                        text: document.text.map((page, index) =>
-                                            index === currentPage - 1 ? e.target.value : page
-                                        ),
-                                    })
-                                }
-                                className="w-full h-full p-2 border"
-                            />
-                        ) : (
-                            <div className="whitespace-pre-wrap">{document.text[currentPage - 1]}</div>
-                        )}
-                    </div>
-
-                    {/* Pagination Controls */}
-                    <div className="flex justify-between mt-4 px-6">
-                        <div className="flex items-center gap-4">
-                            <Button
-                                className="w-20"
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                前へ
-                            </Button>
-                            <Input
-                                className="w-20 text-center"
-                                type="number"
-                                value={currentPage}
-                                onChange={(e) => {
-                                    const newPage = Number(e.target.value);
-                                    if (!isNaN(newPage)) {
-                                        handlePageChange(newPage);
-                                    }
-                                }}
-                                min={1}
-                                max={document.text.length}
-                            />
-                            <Button
-                                className="w-20"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage >= document.text.length}
-                            >
-                                次へ
-                            </Button>
-                        </div>
-
-                        {/* Edit and Save Buttons */}
-                        <div className="flex items-center gap-4">
-                            {isEditing ? (
-                                <Button onClick={handleSave} className="bg-green-500 text-white">
-                                    保存
-                                </Button>
-                            ) : (
-                                <Button onClick={handleEdit} className="bg-blue-500 text-white">
-                                    編集
-                                </Button>
-                            )}
-                            <Button onClick={handleAllSave} className="bg-blue-500 text-white">
-                                全体保存
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-muted-foreground">文献を読み込み中...</p>
         </div>
-    );
-};
+      </div>
+    )
+  }
 
-export default DocumentDetail;
+  if (!document) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p className="text-muted-foreground">文献が見つかりませんでした</p>
+      </div>
+    )
+  }
+
+  const isPdf = document.title.toLowerCase().endsWith('.pdf');
+
+  return (
+    <div className="container mx-auto px-4 py-8 h-screen flex flex-col">
+      <h1 className="text-2xl font-bold mb-6">{document.title}</h1>
+      
+      {isPdf ? (
+        <div className="flex-1">
+          <PdfViewer fileUrl={`${API_BASE_URL}/storage/documents/${document.title}`} />
+        </div>
+      ) : (
+        <div className="relative border rounded-lg overflow-hidden bg-background w-full flex-1">
+          <TransformWrapper>
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <>
+                <div className="flex space-x-2 mb-2">
+                  <Button variant="outline" onClick={() => zoomIn()}>+</Button>
+                  <Button variant="outline" onClick={() => zoomOut()}>-</Button>
+                  <Button variant="outline" onClick={() => resetTransform()}>リセット</Button>
+                </div>
+                <TransformComponent wrapperStyle={{ width: "100%", height: "calc(100% - 40px)" }}>
+                  <img
+                    src={`${API_BASE_URL}/storage/documents/${document.title}`}
+                    alt={`Page ${currentPage}`}
+                    className="w-full h-full object-contain"
+                  />
+                </TransformComponent>
+              </>
+            )}
+          </TransformWrapper>
+        </div>
+      )}
+
+      {/* <div className="flex items-center justify-center mt-4 space-x-4">
+        <Button
+          variant="outline"
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          前のページ
+        </Button>
+        
+        <span className="text-sm">
+          {currentPage} / {document.total_pages}
+        </span>
+        
+        <Button
+          variant="outline"
+          onClick={handleNextPage}
+          disabled={currentPage === document.total_pages}
+        >
+          次のページ
+          <ChevronRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div> */}
+    </div>
+  )
+}

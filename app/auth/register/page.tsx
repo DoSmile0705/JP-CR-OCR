@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -14,7 +16,8 @@ export default function RegisterPage() {
     username: '',
     email: '',
     password: '',
-    confirm_password: ''
+    confirm_password: '',
+    role: 'reader'
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -92,6 +95,23 @@ export default function RegisterPage() {
             onChange={(e) => setFormData({...formData, confirm_password: e.target.value})}
             required
           />
+        </div>
+        <div className="space-y-2">
+          <Label>利用目的</Label>
+          <RadioGroup
+            value={formData.role}
+            onValueChange={(value) => setFormData({...formData, role: value})}
+            className="flex flex-col space-y-1"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="reader" id="reader" />
+              <Label htmlFor="reader">一般閲覧者</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="researcher" id="researcher" />
+              <Label htmlFor="researcher">研究者</Label>
+            </div>
+          </RadioGroup>
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? '登録中...' : '登録する'}

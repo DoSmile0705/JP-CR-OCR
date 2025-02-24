@@ -5,6 +5,10 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
+  webpack: (config) => {
+    config.externals = [...(config.externals || []), "canvas"];
+    return config;
+  },
 };
 
 module.exports = nextConfig;
