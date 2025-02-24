@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +13,9 @@ import { SpecialZoomLevel, RenderViewer } from "@react-pdf-viewer/core";
 import { pageNavigationPlugin } from '@react-pdf-viewer/page-navigation';
 import { Worker, Viewer } from "@react-pdf-viewer/core";
 import "@react-pdf-viewer/core/lib/styles/index.css";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Image from 'next/image';
+import { zoomPlugin } from '@react-pdf-viewer/zoom';
 
 const PdfViewer = dynamic(() => import('@/components/PdfViewer'), { ssr: false });
 
@@ -58,6 +59,8 @@ export default function DocumentEdit() {
     const [totalPages, setTotalPages] = useState(0);
     const pageNavigationPluginInstance = pageNavigationPlugin();
     const { jumpToPage } = pageNavigationPluginInstance;
+    const zoomPluginInstance = zoomPlugin();
+    const { ZoomInButton, ZoomOutButton, ZoomPopover } = zoomPluginInstance;
 
     useEffect(() => {
         if (documentId) {
@@ -280,6 +283,26 @@ export default function DocumentEdit() {
             <div className="w-1/2 h-full border-r p-4">
                 {isPdf ? (
                     <div className="flex flex-col items-center">
+                        <div
+                            style={{
+                                alignItems: 'center',
+                                backgroundColor: '#eeeeee',
+                                borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                padding: '4px',
+                            }}
+                        >
+                            <div style={{ padding: '0px 2px' }}>
+                                <ZoomOutButton />
+                            </div>
+                            <div style={{ padding: '0px 2px' }}>
+                                <ZoomPopover />
+                            </div>
+                            <div style={{ padding: '0px 2px' }}>
+                                <ZoomInButton />
+                            </div>
+                        </div>
                         <div className="h-[80vh] border rounded-lg overflow-hidden w-full">
                             <Worker workerUrl={`https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js`}>
                                 <Viewer
@@ -288,7 +311,7 @@ export default function DocumentEdit() {
                                     onPageChange={(e) => handlePdfPageChange(e.currentPage)}
                                     onDocumentLoad={(e) => setTotalPages(e.doc.numPages)}
                                     initialPage={pdfCurrentPage}
-                                    plugins={[pageNavigationPluginInstance]}
+                                    plugins={[pageNavigationPluginInstance, zoomPluginInstance]}
                                 />
                             </Worker>
                         </div>

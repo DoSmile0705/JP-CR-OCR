@@ -114,11 +114,11 @@ export default function Navbar() {
                 {user?.username || 'マイアカウント'}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>プロフィール</DropdownMenuItem>
+              {/* <DropdownMenuItem>プロフィール</DropdownMenuItem>
               <DropdownMenuItem>投稿履歴</DropdownMenuItem>
               <DropdownMenuItem>ブックマーク</DropdownMenuItem>
               <DropdownMenuItem>設定</DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator /> */}
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 ログアウト

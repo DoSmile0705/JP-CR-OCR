@@ -55,7 +55,7 @@ export default function DocumentViewer() {
     try {
       const response = await fetch(`${API_BASE_URL}/doc-delete/${id}`, {
         method: 'DELETE',
-      })  
+      })
       if (response.ok) {
         toast({
           title: "成功",
@@ -98,7 +98,7 @@ export default function DocumentViewer() {
               <Image
                 src={`${API_BASE_URL}/storage/thumbnails/${doc.title.split('.')[0]}/1.jpg`}
                 alt={doc.title}
-                className="absolute top-0 left-0 w-full h-full object-contain rounded-t-lg" 
+                className="absolute top-0 left-0 w-full h-full object-contain rounded-t-lg"
                 width={1000}
                 height={1000}
               />
@@ -114,7 +114,7 @@ export default function DocumentViewer() {
                 <BookOpen className="mr-2 h-4 w-4" />
                 閲覧
               </Button>
-              
+
               {user?.role === 'researcher' && Number(doc.user_id) == user?.id && (
                 <Button
                   variant="default"
@@ -124,7 +124,8 @@ export default function DocumentViewer() {
                   編集
                 </Button>
               )}
-              <AlertDialog>
+              {user?.role === 'researcher' && Number(doc.user_id) == user?.id && (
+                <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
@@ -148,6 +149,7 @@ export default function DocumentViewer() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+              )}
             </CardFooter>
           </Card>
         ))}
