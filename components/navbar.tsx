@@ -46,12 +46,12 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 w-full border-b bg-[#3a6c59] backdrop-blur">
       <div className="container flex h-16 items-center px-4">
         <div className="mr-4 hidden md:flex">
           <a href="/" className="mr-6 flex items-center space-x-2">
             {/* <Search className="h-6 w-6" /> */}
-            <span className="hidden font-bold sm:inline-block">
+            <span className="hidden font-bold sm:inline-block text-gray-100">
               中国戯曲日本語注釈データベース
             </span>
           </a>
@@ -71,13 +71,13 @@ export default function Navbar() {
           </form>
           {token && user?.role === 'researcher' && (
             <>
-              <Button variant="default" onClick={() => router.push('/upload')}>
+              <Button className=" bg-[#FFFFFF99] hover:bg-[#FFFFFFCC] text-gray-800" variant="default" onClick={() => router.push('/upload')}>
                 <Upload className="mr-2 h-4 w-4" />
                 文献登録
               </Button>
             </>
           )}
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -99,15 +99,19 @@ export default function Navbar() {
                 システム
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </div>
 
         {token ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-2 text-gray-100 cursor-pointer">
+                {/* <Button variant="ghost" size="icon"> */}
+                <User className="h-5 w-5 text-gray-100" />
+
+                {/* </Button> */}
+                {user?.username || 'マイアカウント'}
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>
@@ -127,10 +131,11 @@ export default function Navbar() {
           </DropdownMenu>
         ) : (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.push('/auth/signin')}>
+            <Button className="bg-transparent border-none hover:bg-transparent text-gray-100 hover:text-gray-300" variant="outline" onClick={() => router.push('/auth/signin')}>
               ログイン
             </Button>
-            <Button variant="outline" onClick={() => router.push('/auth/register')}>
+            <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
+            <Button className="bg-transparent border-none hover:bg-transparent text-gray-100 hover:text-gray-300" variant="outline" onClick={() => router.push('/auth/register')}>
               新規登録
             </Button>
           </div>
@@ -144,39 +149,41 @@ export default function Navbar() {
           <NavigationMenuList className="gap-2">
             <NavigationMenuItem>
               <Link href="/about" legacyBehavior passHref>
-                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
                   本ページについて
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
+            <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
 
             <NavigationMenuItem>
               <Link href="/news" legacyBehavior passHref>
-                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
                   お知らせ
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-
+            <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
             <NavigationMenuItem>
               <Link href="/search" legacyBehavior passHref>
-                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
                   検索
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
+            <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
 
             <NavigationMenuItem>
               <Link href="/documents" legacyBehavior passHref>
-                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
                   報告書、資料等
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-
+            <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
             <NavigationMenuItem>
               <Link href="/contact" legacyBehavior passHref>
-                <NavigationMenuLink className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
+                <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
                   お問い合わせ
                 </NavigationMenuLink>
               </Link>

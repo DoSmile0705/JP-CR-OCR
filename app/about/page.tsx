@@ -2,20 +2,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function AboutPage() {
   return (
-    <div className="container py-8 space-y-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="container py-8 space-y-8 mx-auto">
+      <div className="max-w-5xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold">本ページについて</h1>
         
-        <Card>
-          <CardContent className="pt-6">
-            <p className="mb-4">
+        {/* <Card>
+          <CardContent className="pt-6"> */}
+            <p className="mb-4"> 
               本ホームページは、日中古典戯曲研究の発展と深化を目的として開設されました。特に、中国古典戯曲に関する日本国内の所蔵状況を調査・整理し、その成果を広く公開することを主な目標としています。
             </p>
             <p>
               この研究は、日本に伝わる中国古典戯曲資料のうち、日本人による註釈や書き入れが施されたものを中心に行われています。これらの貴重な資料を収集・調査・翻刻することで、新たな学術的価値を見出し、アジア文学史における国際的な比較研究の発展に寄与することを目指します。
             </p>
-          </CardContent>
-        </Card>
+          {/* </CardContent>
+        </Card> */}
 
         <Card>
           <CardHeader>

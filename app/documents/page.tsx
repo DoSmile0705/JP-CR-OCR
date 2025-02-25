@@ -28,7 +28,7 @@ export default function DocumentViewer() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
-  const { user } = useAuth() // Assuming userRole is available in AuthContext
+  const { token, user } = useAuth() // Assuming userRole is available in AuthContext
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
   useEffect(() => {
@@ -55,8 +55,13 @@ export default function DocumentViewer() {
     try {
       const response = await fetch(`${API_BASE_URL}/doc-delete/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       })
       if (response.ok) {
+        fetchDocuments()
         toast({
           title: "成功",
           description: "文献を削除しました",
