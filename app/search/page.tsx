@@ -12,7 +12,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, BookOpen, PenTool, Languages, FileSearch, ChevronDown } from "lucide-react"
+import { Search, BookOpen, PenTool, Languages, FileSearch, ChevronDown, Edit } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from '../contexts/AuthContext'
@@ -20,12 +20,14 @@ import Image from 'next/image'
 
 type Document = {
   id: string;
+  user_id: string;
   title: string;
   type: number;
 }
 
 type SearchResult = {
   id: string;
+  user_id: string;
   document_title: string;
   total_matches: number;
   matches: {
@@ -50,7 +52,7 @@ export default function Home() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
-  const { token } = useAuth()
+  const { user, token } = useAuth()
   const searchQuery = searchParams.get('keyword')
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // Use the base URL from .env
 
@@ -171,7 +173,7 @@ export default function Home() {
                         className="font-bold cursor-pointer flex items-center "
 
                       >
-                        <span 
+                        <span
                           onClick={() => {
                             navigateToPage(result.id, page.page_number);
                           }}
@@ -210,6 +212,15 @@ export default function Home() {
                   <FileSearch className="mr-2 h-4 w-4" />
                   詳細
                 </Button>
+                {user?.role === 'researcher' && Number(result.user_id) == user?.id && (
+                  <Button
+                    variant="default"
+                    onClick={() => router.push(`/edit?id=${result.id}`)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    編集
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}
@@ -221,12 +232,12 @@ export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Welcome Section */}
-      <section className="mb-12">
+      {/* <section className="mb-12">
         <h1 className="text-3xl font-bold mb-4 text-center">古典籍デジタルアーカイブへようこそ</h1>
         <p className="text-lg text-muted-foreground text-center">
           日本・中国の古典籍をデジタル化し、検索・閲覧できるプラットフォームです。
         </p>
-      </section>
+      </section> */}
 
       <div className="container mx-auto p-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -248,6 +259,15 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardFooter className="mt-auto flex justify-end space-x-2">
+                {user?.role === 'researcher' && Number(doc.user_id) == user?.id && (
+                  <Button
+                    variant="default"
+                    onClick={() => router.push(`/edit?id=${doc.id}`)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    編集
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/detail?id=${doc.id}`)}

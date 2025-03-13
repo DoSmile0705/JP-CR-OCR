@@ -25,10 +25,17 @@ export default function NewsPage() {
   const newsId = searchParams.get('id')
 
   useEffect(() => {
-    fetchNews()
+    fetchNews();
+    
   }, [])
 
   useEffect(() => {
+    console.log(newsId)
+
+    if(!newsId) {
+      setSelectedNews(null);
+    }
+
     if (newsId && news.length > 0) {
         // Search for news item with matching ID
         console.log("newsId", newsId)

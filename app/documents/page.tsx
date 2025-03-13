@@ -120,7 +120,7 @@ export default function DocumentViewer() {
                 閲覧
               </Button>
 
-              {user?.role === 'researcher' && Number(doc.user_id) == user?.id && (
+              {/* {user?.role === 'researcher' && Number(doc.user_id) == user?.id && (
                 <Button
                   variant="default"
                   onClick={() => router.push(`/edit?id=${doc.id}`)}
@@ -154,7 +154,7 @@ export default function DocumentViewer() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              )}
+              )} */}
             </CardFooter>
           </Card>
         ))}

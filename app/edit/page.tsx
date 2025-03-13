@@ -61,6 +61,7 @@ export default function DocumentEdit() {
     const { jumpToPage } = pageNavigationPluginInstance;
     const zoomPluginInstance = zoomPlugin();
     const { ZoomInButton, ZoomOutButton, ZoomPopover } = zoomPluginInstance;
+    const isPdf = document?.title.toLowerCase().endsWith('.pdf');
 
     useEffect(() => {
         if (documentId) {
@@ -69,9 +70,6 @@ export default function DocumentEdit() {
     }, [documentId]);
 
     useEffect(() => {
-        if (totalPages == 0) {
-            return;
-        }
         // When total pages is set or changes, ensure document has enough pages
         console.log("totalPages of current document", totalPages);
         const processedData = {
@@ -137,7 +135,7 @@ export default function DocumentEdit() {
             console.log("totalPages of current document", totalPages);
             const processedData = {
                 ...data,
-                pages: data.pages || generateEmptyPages(totalPages),
+                pages: data.pages || generateEmptyPages(totalPages == 0 ? 1 : totalPages),
                 thumbnails: data.thumbnails || []
             };
 
@@ -275,8 +273,6 @@ export default function DocumentEdit() {
 
     const currentPageData = getCurrentPage();
 
-    const isPdf = document.title.toLowerCase().endsWith('.pdf');
-
     return (
         <div className="flex h-[calc(100vh-4rem)]">
             {/* Left side: PDF Viewer */}
@@ -374,6 +370,7 @@ export default function DocumentEdit() {
                                             src={`${API_BASE_URL}/storage/documents/${document.title}`}
                                             alt={`Page ${currentPage}`}
                                             className="w-full h-full object-contain"
+                                            onLoad={() => setTotalPages(1)}
                                             width={1000}
                                             height={1000}
                                         />

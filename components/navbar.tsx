@@ -21,7 +21,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
 import Link from 'next/link'
-import { Search, Upload, User, Moon, Sun, Laptop, LogOut } from 'lucide-react'
+import { Search, Upload, User, Moon, Sun, Laptop, LogOut, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
@@ -33,11 +33,24 @@ export default function Navbar() {
   const searchParams = useSearchParams()
   const { user, token, logout } = useAuth()
 
+  // Reset search when auth state changes
+  useEffect(() => {
+    setSearchQuery('')
+  }, [token])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       router.push(`/search?keyword=${encodeURIComponent(searchQuery)}`)
     }
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
+  }
+
+  const handleUserManagement = () => {
+    router.push('/admin')
   }
 
   const handleSignOut = () => {
@@ -58,25 +71,43 @@ export default function Navbar() {
         </div>
 
         <div className="flex flex-1 items-center space-x-2">
-          <form onSubmit={handleSearch} className="w-full max-w-xl">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <form onSubmit={handleSearch} className="w-full max-w-xl flex flex-row gap-5">
+            <div className="relative w-full">
+              {/* <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" /> */}
               <Input
                 placeholder="文献を検索..."
-                className="pl-8"
+                className="pl-2 pr-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div>
+              <Button
+                type="submit"
+                className="bg-blue-300 hover:bg-blue-600 text-white"
+                variant="default"
+              >
+                <Search className="left-2 top-2.5 h-4 w-4 text-white" />
+              </Button>
             </div>
           </form>
-          {token && user?.role === 'researcher' && (
+          {/* {token && user?.role === 'researcher' && (
             <>
               <Button className=" bg-[#FFFFFF99] hover:bg-[#FFFFFFCC] text-gray-800" variant="default" onClick={() => router.push('/upload')}>
                 <Upload className="mr-2 h-4 w-4" />
                 文献登録
               </Button>
             </>
-          )}
+          )} */}
           {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -121,8 +152,12 @@ export default function Navbar() {
               {/* <DropdownMenuItem>プロフィール</DropdownMenuItem>
               <DropdownMenuItem>投稿履歴</DropdownMenuItem>
               <DropdownMenuItem>ブックマーク</DropdownMenuItem>
-              <DropdownMenuItem>設定</DropdownMenuItem>
-              <DropdownMenuSeparator /> */}
+              */}
+              {user?.role == 'admin' ?
+                <DropdownMenuItem onClick={handleUserManagement}>
+                  ユーザー管理</DropdownMenuItem> :
+                <></>}
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 ログアウト
@@ -167,7 +202,7 @@ export default function Navbar() {
             <NavigationMenuItem>
               <Link href="/search" legacyBehavior passHref>
                 <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
-                  検索
+                  資料検索
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
@@ -181,6 +216,19 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
             <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
+            {token && user?.role === 'researcher' && (
+              <>
+                <NavigationMenuItem>
+                  <Link href="/upload" legacyBehavior passHref>
+                    <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
+                      文献登録・編集
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                < div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
+              </>
+            )
+            }
             <NavigationMenuItem>
               <Link href="/contact" legacyBehavior passHref>
                 <NavigationMenuLink className="text-gray-100 hover:text-gray-300">
