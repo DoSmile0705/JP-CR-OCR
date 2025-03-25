@@ -59,7 +59,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-[#3a6c59] backdrop-blur">
+    <nav className="sticky top-0 z-50 w-full border-b bg-[#B3424A] backdrop-blur">
       <div className="container flex h-16 items-center px-4">
         <div className="mr-4 hidden md:flex">
           <a href="/" className="mr-6 flex items-center space-x-2">
@@ -216,7 +216,7 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
             <div className="border-l border-gray-300 h-6 self-center" /> {/* Vertical Separator */}
-            {token && user?.role === 'researcher' && (
+            {token && (user?.role === 'researcher' || user?.role === 'admin') && (
               <>
                 <NavigationMenuItem>
                   <Link href="/upload" legacyBehavior passHref>

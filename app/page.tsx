@@ -87,7 +87,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-8">
             {/* Welcome Section */}
             <section className="mb-12">
-                <h1 className="text-3xl font-bold mb-4 text-center">古典籍デジタルアーカイブへようこそ</h1>
+                <h1 className="text-3xl font-bold mb-4 text-center">中国戯曲日本語注釈データベース</h1>
                 <p className="text-lg text-muted-foreground text-center">
                     日本・中国の古典籍をデジタル化し、検索・閲覧できるプラットフォームです。
                 </p>

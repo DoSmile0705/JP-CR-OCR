@@ -6,6 +6,11 @@ import Link from 'next/link'
 import { useToast } from "@/components/ui/use-toast"
 import { useSearchParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useAuth } from '@/app/contexts/AuthContext';
 
 type NewsItem = {
   id: string
@@ -17,8 +22,11 @@ type NewsItem = {
 
 export default function NewsPage() {
   const [news, setNews] = useState<NewsItem[]>([])
+  const [newNews, setNewNews] = useState({ title: "", description: "", type: "new" })
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null)
   const [loading, setLoading] = useState(true)
+  const { user, token } = useAuth();
+  const [showModal, setShowModal] = useState(false)
   const { toast } = useToast()
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
   const searchParams = useSearchParams()
@@ -26,32 +34,32 @@ export default function NewsPage() {
 
   useEffect(() => {
     fetchNews();
-    
+
   }, [])
 
   useEffect(() => {
     console.log(newsId)
 
-    if(!newsId) {
+    if (!newsId) {
       setSelectedNews(null);
     }
 
     if (newsId && news.length > 0) {
-        // Search for news item with matching ID
-        console.log("newsId", newsId)
-        const selectedNewsItem = news.find(item => { 
-          console.log(item.id)
-          return item.id == newsId 
-        })
+      // Search for news item with matching ID
+      console.log("newsId", newsId)
+      const selectedNewsItem = news.find(item => {
+        console.log(item.id)
+        return item.id == newsId
+      })
 
-        // Update selected news if found
-        if (selectedNewsItem) {
-            setSelectedNews(selectedNewsItem)
-        } else {
-            setSelectedNews(null) // Reset if not found
-        }
+      // Update selected news if found
+      if (selectedNewsItem) {
+        setSelectedNews(selectedNewsItem)
+      } else {
+        setSelectedNews(null) // Reset if not found
+      }
     }
-}, [newsId, news])
+  }, [newsId, news])
 
   const fetchNews = async () => {
     try {
@@ -67,6 +75,22 @@ export default function NewsPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUploadNews = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/news`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newNews)
+      })
+      if (!response.ok) throw new Error("アップロードに失敗しました")
+      toast({ title: "成功", description: "お知らせを追加しました" })
+      setShowModal(false)
+      fetchNews()
+    } catch (error) {
+      toast({ title: "エラー", description: "アップロードに失敗しました", variant: "destructive" })
     }
   }
 
@@ -108,7 +132,7 @@ export default function NewsPage() {
             <ChevronLeft className="h-4 w-4" />
             戻る
           </Button>
-          
+
           <div className="space-y-4">
             <h1 className="text-3xl font-bold">{selectedNews.title}</h1>
             <div className="flex items-center gap-2">
@@ -135,12 +159,17 @@ export default function NewsPage() {
       <div className="flex items-center gap-2 mb-8">
         <Bell className="h-5 w-5" />
         <h1 className="text-3xl font-bold">お知らせ</h1>
+        {
+          user?.role == 'admin' && (
+            <Button id='new-upload' className='ml-10' onClick={() => setShowModal(true)}>お知らせアップロード</Button>
+          )
+        }
       </div>
 
       <div className="grid gap-2">
         {news.map((item) => (
-          <Link 
-            key={item.id} 
+          <Link
+            key={item.id}
             href={`/news?id=${item.id}`}
             className="flex items-center justify-between p-4 hover:bg-accent rounded-lg transition-colors"
           >
@@ -163,6 +192,32 @@ export default function NewsPage() {
           </Link>
         ))}
       </div>
+      {/* Modal for Uploading News */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>お知らせを追加</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input placeholder="タイトル" value={newNews.title} onChange={(e) => setNewNews({ ...newNews, title: e.target.value })} />
+            <Textarea placeholder="説明" value={newNews.description} onChange={(e) => setNewNews({ ...newNews, description: e.target.value })} />
+            <RadioGroup value={newNews.type} onValueChange={(value) => setNewNews({ ...newNews, type: value })}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="new" id="new" />
+                <label htmlFor="new">新しいお知らせ</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="old" id="old" />
+                <label htmlFor="old">過去のお知らせ</label>
+              </div>
+            </RadioGroup>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowModal(false)}>キャンセル</Button>
+            <Button onClick={handleUploadNews}>アップロード</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
